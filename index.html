@@ -353,7 +353,7 @@ class FireNet{
     await this.root.child('state').once('value');}
   on(cb,onErr){this.root.on('value',s=>cb(s.val()||{}),e=>{if(onErr)onErr(e);toast(errMsg(e))})}
   stop(){try{this.root.off()}catch(e){}}
-  set(path,val){return this.root.child(path).set(val===undefined?null:val)}
+  set(path,val){const r=path?this.root.child(path):this.root;return r.set(val===undefined?null:val)}
   now(){return Date.now()+this.off}
   online(path){const r=this.root.child(path);r.set(true);r.onDisconnect().set(false);this.db.ref('.info/connected').on('value',s=>{if(s.val()){r.set(true);r.onDisconnect().set(false)}})}
 }
