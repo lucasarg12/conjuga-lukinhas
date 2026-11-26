@@ -337,6 +337,7 @@ class LocalNet{
       else if(m.op==='full'){this.store=merge(m.store,this.store);this.emit()}};
     this.ch.postMessage({op:'hello'});await new Promise(r=>setTimeout(r,250));}
   on(cb){this.cbs.push(cb);cb(this.store)}
+  stop(){try{this.ch.close()}catch(e){}this.cbs=[]}
   emit(){if(this.q)return;this.q=1;queueMicrotask(()=>{this.q=0;this.cbs.forEach(c=>c(this.store))})}
   set(path,val){deepSet(this.store,path,val);this.ch.postMessage({op:'set',path,val:val===undefined?null:val});this.emit();return Promise.resolve()}
   now(){return Date.now()}
@@ -350,7 +351,8 @@ class FireNet{
     this.db=firebase.database(app);this.root=this.db.ref('games/'+code);this.off=0;
     this.db.ref('.info/serverTimeOffset').on('value',s=>this.off=s.val()||0);
     await this.root.child('state').once('value');}
-  on(cb){this.root.on('value',s=>cb(s.val()||{}),e=>toast('Sem permissão no Firebase: confira as regras do banco.'))}
+  on(cb,onErr){this.root.on('value',s=>cb(s.val()||{}),e=>{if(onErr)onErr(e);toast(errMsg(e))})}
+  stop(){try{this.root.off()}catch(e){}}
   set(path,val){return this.root.child(path).set(val===undefined?null:val)}
   now(){return Date.now()+this.off}
   online(path){const r=this.root.child(path);r.set(true);r.onDisconnect().set(false);this.db.ref('.info/connected').on('value',s=>{if(s.val()){r.set(true);r.onDisconnect().set(false)}})}
@@ -371,7 +373,7 @@ function parseCfg(txt){const m=String(txt).match(/\{[\s\S]*\}/);if(!m)throw new 
   const s=m[0].replace(/\/\/.*$/gm,'').replace(/([{,]\s*)([A-Za-z_]\w*)\s*:/g,'$1"$2":').replace(/'/g,'"').replace(/,\s*}/g,'}');
   const o=JSON.parse(s);if(!o.databaseURL)throw new Error('Falta o databaseURL (crie o Realtime Database primeiro).');
   return{apiKey:o.apiKey,databaseURL:o.databaseURL,projectId:o.projectId,appId:o.appId};}
-function joinURL(){const base=location.href.split('#')[0];return base+'#'+S.code+(S.net.kind==='online'?'.'+b64e(S.fbcfg):'');}
+function joinURL(){const base=location.href.split('#')[0];return base+'#'+S.code+(S.net.kind==='online'&&!FIREBASE_CONFIG?'.'+b64e(S.fbcfg):'');}
 
 function players(){const P=S.data.players||{};return Object.keys(P).map(id=>({id,name:P[id].name||'?',on:P[id].on!==false,t:P[id].t||0})).sort((a,b)=>a.t-b.t);}
 function ranking(){const A=S.data.answers||{},st=S.data.state||{},R={};
@@ -385,12 +387,16 @@ function ranking(){const A=S.data.answers||{},st=S.data.state||{},R={};
 function capyAnim(id,lv){const p=S.prevLv[id];S.prevLv[id]=lv;return p===undefined||p===lv?'':lv>p?'up':'down';}
 
 /* ---------------------------- CONEXÃO ---------------------------- */
+const errMsg=e=>{const m=(e&&(e.message||e.code))||String(e);return /permission|denied/i.test(m)?'O Firebase recusou o acesso: confira se as Regras do Realtime Database foram publicadas.':m};
 async function connect(code,online){
+  if(S.net&&S.net.stop)S.net.stop();S.net=null;S.data={};
   const net=online?new FireNet():new LocalNet();
   await net.init(code,S.fbcfg);
+  await new Promise((ok,no)=>{let first=true;const t=setTimeout(()=>no(new Error('O servidor não respondeu. Confira a internet e tente de novo.')),12000);
+    net.on(d=>{S.data=d||{};if(first){first=false;clearTimeout(t);ok()}else render()},e=>{clearTimeout(t);no(e)})});
   S.net=net;S.code=code;
-  net.on(d=>{S.data=d||{};render()});
 }
+function disconnect(){if(S.net&&S.net.stop)S.net.stop();S.net=null;S.data={};S.role=null;}
 async function hostCreate(mode){
   if(S.busy)return;S.busy=true;
   try{
@@ -401,8 +407,8 @@ async function hostCreate(mode){
     await S.net.set('state',{phase:'lobby',round:0,total:S.cfg.rounds,opts:{furi:S.cfg.furi,meaning:S.cfg.meaning}});
     if(mode==='solo'){S.hostPlays=true;await joinAs(S.name||'Eu');}
     location.hash='host-'+code;
-  }catch(e){toast(e.message||String(e))}
-  S.busy=false;render(true);
+    S.busy=false;render(true);
+  }catch(e){disconnect();S.busy=false;toast(errMsg(e))}
 }
 async function joinAs(name){S.name=name;ls.set('conjuga-name',name);
   await S.net.set('players/'+pid,{name:name.slice(0,24),on:true,t:S.net.now()});S.net.online('players/'+pid+'/on');}
@@ -411,10 +417,10 @@ async function playerJoin(code,name){
   try{code=code.toUpperCase().replace(/[^A-Z]/g,'');if(code.length!==4)throw new Error('O código tem 4 letras.');
     if(!name.trim())throw new Error('Digite seu nome.');
     await connect(code,!!S.fbcfg);
-    if(!S.data.state){throw new Error(S.fbcfg?'Sala não encontrada.':'Sala não encontrada. Sem a config do Firebase, só dá para entrar em salas abertas neste mesmo navegador — use o link/QR do professor.')}
+    if(!S.data.state){throw new Error(S.fbcfg?'Sala '+code+' não encontrada. Confira o código (ou se o professor já criou a sala).':'Sala não encontrada. Sem a config do Firebase, só dá para entrar em salas abertas neste mesmo navegador — use o link/QR do professor.')}
     S.role='player';await joinAs(name.trim());
-  }catch(e){toast(e.message||String(e))}
-  S.busy=false;render(true);
+    S.busy=false;render(true);
+  }catch(e){disconnect();S.busy=false;toast(errMsg(e))}
 }
 
 /* ---------------------------- ANFITRIÃO ---------------------------- */
@@ -608,7 +614,7 @@ function tick(){const s=st();const b=$('#tbar'),n=$('#tnum');if(!b||!S.net)retur
 setInterval(tick,200);
 
 function bind(k){const on=(id,fn)=>{const e=$(id);if(e)e.onclick=fn};
-  if(k==='home'){on('#bjoin',()=>playerJoin($('#jcode').value,$('#jname').value));
+  if(k==='home'){on('#bjoin',()=>{toast('Conectando…');playerJoin($('#jcode').value,$('#jname').value)});
     ['#jcode','#jname'].forEach(id=>{const e=$(id);if(e)e.onkeydown=ev=>{if(ev.key==='Enter')playerJoin($('#jcode').value,$('#jname').value)}});
     on('#bonline',()=>hostCreate('online'));on('#blocal',()=>hostCreate('local'));on('#bsolo',()=>hostCreate('solo'));
     on('#bfb',()=>{try{S.fbcfg=parseCfg($('#fbtxt').value);ls.set('conjuga-fb',S.fbcfg);render(true)}catch(e){toast(e.message)}});
