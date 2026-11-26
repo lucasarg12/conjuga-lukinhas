@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Conjuga! 活用バトル</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* VOICE: sala de karaokê / torneio de karuta — animado, mas limpo
+   IDEA: cada pergunta é uma carta (fuda) de karuta sobre tatami escuro
+   PICTURE: a carta grande com a palavra; respostas aparecem como placas
+   COLOUR/TYPE: sumi escuro, papel claro, vermelho-shu; Dela Gothic One + Zen Kaku Gothic New
+   LAYOUT: carta no centro, ao vivo ao lado (empilha no celular) */
+:root{--bg:#16151a;--bg2:#1e1c23;--panel:#24222b;--line:#38353f;--ink:#f3f0ea;--mute:#a7a3ae;--paper:#fbf8f1;--sumi:#1b1a1f;
+--shu:#e8452c;--ok:#47c486;--ng:#ff6b7a;--past:#6fa8ff;--neg:#ff6b7a;--pol:#e9b949;--gold:#e9b949}
+*{box-sizing:border-box;min-width:0}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Zen Kaku Gothic New",system-ui,sans-serif}
+body{min-height:100vh;overflow-x:clip;background:
+ radial-gradient(circle at 50% -20%,#2a2531 0,transparent 60%),
+ url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='30'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='.035' stroke-width='1.5'%3E%3Cpath d='M0 30a30 30 0 0 1 60 0M10 30a20 20 0 0 1 40 0M20 30a10 10 0 0 1 20 0M-30 15a30 30 0 0 1 60 0M30 15a30 30 0 0 1 60 0'/%3E%3C/g%3E%3C/svg%3E"),var(--bg)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;border-radius:12px;padding:12px 20px;min-height:44px;font-weight:700;background:var(--panel);border:1px solid var(--line)}
+button.main{background:var(--shu);border-color:var(--shu);color:#fff}
+button:disabled{opacity:.45;cursor:not-allowed}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--pol);outline-offset:2px}
+input[type=text],input[type=number],select,textarea{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:11px 14px;font-size:16px;width:100%}
+label{cursor:pointer}
+.wrap{max-width:1180px;margin:0 auto;padding:clamp(16px,3vw,32px) max(4vw,14px)}
+.top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:space-between;margin-bottom:22px}
+.brand{font-family:"Dela Gothic One";font-size:22px;display:flex;align-items:center;gap:10px}
+.logo{display:grid;place-items:center;width:40px;height:40px;background:var(--shu);border-radius:10px;color:#fff;font-size:22px}
+.pill{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:14px;color:var(--mute);white-space:nowrap}
+.pill b{color:var(--ink)}
+h1{font-family:"Dela Gothic One";font-weight:400;font-size:clamp(32px,5vw,52px);line-height:1.05;margin:0 0 14px;text-wrap:balance}
+h2{font-size:20px;margin:0 0 12px}
+h3{font-size:15px;margin:18px 0 8px;color:var(--mute);font-weight:700}
+.mute{color:var(--mute)}.small{font-size:14px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:20px}
+.grid2{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:20px}
+.stackc{display:flex;flex-direction:column;gap:12px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.home .hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.9fr);gap:28px;align-items:center;margin-bottom:28px}
+/* card */
+.fuda{position:relative;background:var(--paper);color:var(--sumi);border-radius:20px;padding:26px 22px 20px;text-align:center;
+ box-shadow:0 1px 0 #fff inset,0 18px 40px -18px #000,0 0 0 6px var(--paper),0 0 0 8px var(--shu);margin:8px auto;max-width:360px;width:100%}
+.fuda .w{font-size:clamp(52px,10vw,84px);line-height:1.15;font-weight:700;letter-spacing:.02em}
+.fuda rt{font-size:.3em;font-weight:500;color:#5b5862}
+.fuda .m{font-size:17px;color:#55525c;margin-top:4px}
+.fuda .k{display:inline-block;margin-top:10px;font-size:13px;font-weight:700;padding:3px 12px;border-radius:999px;background:#ece6da;color:#5b5862}
+.fuda.tilt{transform:rotate(-3deg)}
+.form{text-align:center;margin:22px 0 10px}
+.form .fn{font-family:"Dela Gothic One";font-size:clamp(24px,4vw,34px);line-height:1.1}
+.form .fj{color:var(--mute);font-size:16px;margin-top:4px}
+.chips{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px}
+.chip{border-radius:999px;padding:6px 16px;font-weight:700;font-size:15px;border:2px solid var(--line);color:var(--mute);white-space:nowrap}
+.chip.past{border-color:var(--past);color:var(--past)}.chip.neg{border-color:var(--neg);color:var(--neg)}.chip.pol{border-color:var(--pol);color:var(--pol)}
+.chip.on.past{background:var(--past);color:#0d1626}.chip.on.neg{background:var(--neg);color:#2a0c10}.chip.on.pol{background:var(--pol);color:#2a1f05}
+.ansbox{max-width:520px;margin:18px auto 0}
+.ansbox input{font-size:26px;text-align:center;padding:14px;border-radius:16px;border-width:2px}
+.hint{text-align:center;font-size:13px;color:var(--mute);margin-top:8px}
+.fb{max-width:520px;margin:18px auto 0;border-radius:16px;padding:14px 18px;text-align:center;font-size:20px}
+.fb.ok{background:color-mix(in srgb,var(--ok) 20%,transparent);border:2px solid var(--ok)}
+.fb.ng{background:color-mix(in srgb,var(--ng) 16%,transparent);border:2px solid var(--ng)}
+.fb .yours{text-decoration:line-through;opacity:.75}
+.fb .right{font-size:28px;font-weight:700}
+.fb .alt{font-size:14px;color:var(--mute);margin-top:4px}
+.timer{height:10px;background:var(--bg2);border-radius:99px;overflow:hidden;border:1px solid var(--line)}
+.timer i{display:block;height:100%;background:var(--shu);width:100%;transition:width .2s linear}
+.game{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:22px;align-items:start}
+.live h2{display:flex;justify-content:space-between;align-items:baseline}
+.plist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.plist li{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:12px;background:var(--bg2);border:1px solid var(--line)}
+.plist li .n{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.plist li.ok{border-color:var(--ok)}.plist li.ng{border-color:var(--ng)}
+.plist li .s{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.mark{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:15px;flex:none;background:var(--line)}
+.ok .mark{background:var(--ok);color:#06240f}.ng .mark{background:var(--ng);color:#2a0c10}
+.me{color:var(--pol)}
+.code{font-family:"Dela Gothic One";font-size:clamp(48px,9vw,84px);letter-spacing:.08em;line-height:1;color:var(--paper)}
+.link{font-size:13px;word-break:break-all;color:var(--mute);background:var(--bg2);padding:8px 10px;border-radius:10px;border:1px solid var(--line)}
+#qr{background:#fff;padding:10px;border-radius:12px;width:max-content}
+#qr img,#qr canvas{display:block}
+.opts{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:4px 14px}
+.opts label{display:flex;gap:8px;align-items:center;padding:5px 0;font-size:15px}
+.opts input{width:18px;height:18px;accent-color:var(--shu);flex:none}
+.hostbar{position:sticky;bottom:0;z-index:5;margin-top:22px;padding:12px;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(6px);border-top:1px solid var(--line);display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.podium{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:end;max-width:640px;margin:10px auto 26px}
+.podium>div{background:var(--panel);border:1px solid var(--line);border-radius:16px 16px 6px 6px;text-align:center;padding:14px 8px}
+.podium .p1{min-height:200px;border-color:var(--gold);order:2}.podium .p2{min-height:160px;order:1}.podium .p3{min-height:130px;order:3}
+.podium .pos{font-family:"Dela Gothic One";font-size:34px}.podium .p1 .pos{color:var(--gold)}
+.podium .nm{font-weight:700;font-size:18px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.podium .sc{font-size:22px;font-weight:700}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th,td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:left}
+th{color:var(--mute);font-size:14px;font-weight:500}
+td.r,th.r{text-align:right}
+.err{color:var(--ng);font-size:14px;min-height:1em}
+details summary{cursor:pointer;color:var(--mute);font-size:14px}
+code{background:var(--bg2);padding:1px 6px;border-radius:6px;font-size:13px;overflow-wrap:anywhere}
+pre{background:var(--bg2);padding:10px;border-radius:10px;font-size:12px;overflow-x:auto}
+.big-ans{font-size:clamp(28px,5vw,40px);font-weight:700}
+.prev{text-align:center;font-size:22px;min-height:34px;margin-top:6px;color:var(--paper)}
+.prev:empty{display:none}
+.padtog{display:flex;justify-content:center;gap:8px;margin-top:10px}
+.padtog button{padding:6px 14px;min-height:38px;font-size:14px}
+.pad{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;max-width:420px;margin:10px auto 0}
+.pad button{padding:0;min-height:42px;font-size:20px;font-weight:500;border-radius:10px;background:var(--bg2)}
+.pad button.fx{font-size:22px;font-weight:700;background:var(--panel)}
+.pad button.go{grid-column:span 5;background:var(--shu);border-color:var(--shu);color:#fff;font-size:17px}
+.pad i{display:block}
+.rev{display:block;width:max-content;margin:16px auto -8px;padding:5px 14px;border-radius:999px;background:var(--pol);color:#2a1f05;font-weight:700;font-size:14px}
+.capy{display:block;flex:none;overflow:visible}
+.capy.up{animation:hop .6s ease-out}.capy.down{animation:shake .5s ease-out}
+@keyframes hop{30%{transform:translateY(-10px) scale(1.08)}60%{transform:translateY(0)}80%{transform:translateY(-3px)}}
+@keyframes shake{20%{transform:translateX(-5px) rotate(-6deg)}40%{transform:translateX(5px) rotate(5deg)}60%{transform:translateX(-3px)}80%{transform:translateX(2px)}}
+.plist li .capy{margin:-6px 0}
+.mood{font-size:12px;color:var(--mute);white-space:nowrap}
+.mycapy{display:flex;align-items:center;gap:12px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.mycapy b{display:block;font-size:17px}
+.zoo{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
+.zoo li{background:var(--bg2);border:2px solid var(--line);border-radius:14px;padding:8px;text-align:center}
+.zoo li.ok{border-color:var(--ok)}.zoo li.ng{border-color:var(--ng)}
+.zoo li .capy{margin:0 auto}
+.zoo .n{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.zoo .s{font-variant-numeric:tabular-nums;font-size:14px;color:var(--mute)}
+.game.proj{grid-template-columns:minmax(0,1fr) minmax(0,460px)}
+.hard{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.hard li{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.hard .hw{font-size:22px;font-weight:700}.hard .ha{font-size:18px;color:var(--ok)}
+@keyframes pop{from{transform:scale(.92);opacity:0}to{transform:none;opacity:1}}
+.pop{animation:pop .25s ease-out}
+@media(prefers-reduced-motion:reduce){.pop,.capy.up,.capy.down{animation:none}.timer i{transition:none}}
+@media(max-width:860px){.game,.grid2,.home .hero{grid-template-columns:minmax(0,1fr)}.fuda.tilt{transform:none}}
+@media(max-width:600px){.podium .pos{font-size:24px}.podium .nm{font-size:15px}.ansbox input{font-size:22px}}
+</style>
+</head>
+<body>
+<div id="app" class="wrap"></div>
+<script>
+// ======================================================================
+//  CONFIGURAÇÃO OPCIONAL: cole aqui o objeto do Firebase para que o modo
+//  online funcione sem precisar colar a config na tela. Ex.:
+//  const FIREBASE_CONFIG = {apiKey:"...", databaseURL:"https://xxx-default-rtdb.firebaseio.com", projectId:"xxx"};
+const FIREBASE_CONFIG = {apiKey:"AIzaSyDS5b4g6skocGGsr7jQfPuSM_zdgvzUr0k",authDomain:"conjugacao-lucas.firebaseapp.com",databaseURL:"https://conjugacao-lucas-default-rtdb.firebaseio.com",projectId:"conjugacao-lucas",appId:"1:212908509950:web:a79c232447f60b152a33af"};
+// ======================================================================
+{
+/* ---------------------------- PALAVRAS ---------------------------- */
+// [kanji, kana, tipo, significado, nível JLPT, formas a evitar]
+// tipos: g=godan(う) i=ichidan(る) s=する k=来る ai=adj-i ii=いい na=adj-na
+const WORDS=[
+['会う','あう','g','encontrar',5],['買う','かう','g','comprar',5],['使う','つかう','g','usar',5],['言う','いう','g','dizer',5],['歌う','うたう','g','cantar',5],
+['習う','ならう','g','aprender',5],['洗う','あらう','g','lavar',5],['手伝う','てつだう','g','ajudar',4],['思う','おもう','g','pensar, achar',4],['笑う','わらう','g','rir',4],
+['書く','かく','g','escrever',5],['聞く','きく','g','ouvir, perguntar',5],['歩く','あるく','g','andar',5],['働く','はたらく','g','trabalhar',5],['行く','いく','g','ir',5],
+['置く','おく','g','colocar',5],['引く','ひく','g','puxar',5],['泣く','なく','g','chorar',4],['泳ぐ','およぐ','g','nadar',5],['急ぐ','いそぐ','g','apressar-se',4],
+['脱ぐ','ぬぐ','g','tirar (roupa)',5],['話す','はなす','g','falar',5],['貸す','かす','g','emprestar',5],['出す','だす','g','tirar, enviar',5],['消す','けす','g','apagar',5],
+['押す','おす','g','empurrar',5],['探す','さがす','g','procurar',4],['待つ','まつ','g','esperar',5],['持つ','もつ','g','segurar, ter',5],['立つ','たつ','g','ficar de pé',5],
+['勝つ','かつ','g','vencer',4],['死ぬ','しぬ','g','morrer',5,['imp','tai','vol','kudasai','caus','causpass']],['遊ぶ','あそぶ','g','brincar, sair',5],['呼ぶ','よぶ','g','chamar',5],
+['飛ぶ','とぶ','g','voar',5],['選ぶ','えらぶ','g','escolher',4],['並ぶ','ならぶ','g','fazer fila',5],['喜ぶ','よろこぶ','g','alegrar-se',3],['読む','よむ','g','ler',5],
+['飲む','のむ','g','beber',5],['住む','すむ','g','morar',5],['休む','やすむ','g','descansar, faltar',5],['頼む','たのむ','g','pedir',5],['楽しむ','たのしむ','g','divertir-se',4],
+['帰る','かえる','g','voltar',5],['入る','はいる','g','entrar',5],['走る','はしる','g','correr',5],['作る','つくる','g','fazer, preparar',5],['売る','うる','g','vender',4],
+['座る','すわる','g','sentar-se',4],['乗る','のる','g','embarcar, andar de',5],['撮る','とる','g','tirar (foto)',5],['送る','おくる','g','enviar',4],['守る','まもる','g','proteger, cumprir',3],
+['戦う','たたかう','g','lutar',3],['届く','とどく','g','chegar (entrega)',3],
+['食べる','たべる','i','comer',5],['見る','みる','i','ver',5],['寝る','ねる','i','dormir',5],['起きる','おきる','i','acordar',5],['教える','おしえる','i','ensinar',5],
+['着る','きる','i','vestir',5],['出る','でる','i','sair',5],['開ける','あける','i','abrir',5],['閉める','しめる','i','fechar',5],['忘れる','わすれる','i','esquecer',5],
+['覚える','おぼえる','i','memorizar',4],['始める','はじめる','i','começar',4],['借りる','かりる','i','pegar emprestado',5],['浴びる','あびる','i','tomar (banho)',5],['降りる','おりる','i','descer',5],
+['答える','こたえる','i','responder',4],['決める','きめる','i','decidir',4],['調べる','しらべる','i','pesquisar',4],['見せる','みせる','i','mostrar',5],['考える','かんがえる','i','pensar, refletir',4],
+['続ける','つづける','i','continuar',4],['捨てる','すてる','i','jogar fora',4],['育てる','そだてる','i','criar (filhos, plantas)',3],['比べる','くらべる','i','comparar',3],
+['する','する','s','fazer',5],['来る','くる','k','vir',5],['勉強する','べんきょうする','s','estudar',5],['運転する','うんてんする','s','dirigir',4],['練習する','れんしゅうする','s','praticar',4],
+['電話する','でんわする','s','telefonar',5],['結婚する','けっこんする','s','casar-se',5],['心配する','しんぱいする','s','preocupar-se',4],['説明する','せつめいする','s','explicar',4],
+['高い','たかい','ai','caro, alto',5],['安い','やすい','ai','barato',5],['大きい','おおきい','ai','grande',5],['小さい','ちいさい','ai','pequeno',5],['新しい','あたらしい','ai','novo',5],
+['古い','ふるい','ai','velho (coisa)',5],['暑い','あつい','ai','quente (clima)',5],['寒い','さむい','ai','frio (clima)',5],['楽しい','たのしい','ai','divertido',5],['難しい','むずかしい','ai','difícil',5],
+['優しい','やさしい','ai','gentil',4],['忙しい','いそがしい','ai','ocupado',5],['おいしい','おいしい','ai','gostoso',5],['速い','はやい','ai','rápido',5],['遅い','おそい','ai','lento, tarde',5],
+['長い','ながい','ai','longo',5],['短い','みじかい','ai','curto',5],['強い','つよい','ai','forte',5],['弱い','よわい','ai','fraco',5],['明るい','あかるい','ai','claro, alegre',5],
+['暗い','くらい','ai','escuro',5],['嬉しい','うれしい','ai','feliz',4],['悲しい','かなしい','ai','triste',4],['若い','わかい','ai','jovem',5],['甘い','あまい','ai','doce',5],
+['怖い','こわい','ai','assustador',4],['眠い','ねむい','ai','com sono',4],['面白い','おもしろい','ai','interessante',5],['苦しい','くるしい','ai','sofrido',3],
+['いい','いい','ii','bom',5],
+['静か','しずか','na','quieto',5],['有名','ゆうめい','na','famoso',5],['元気','げんき','na','animado, saudável',5],['便利','べんり','na','prático',5],['不便','ふべん','na','inconveniente',4],
+['好き','すき','na','gostar',5],['嫌い','きらい','na','detestar',5],['上手','じょうず','na','habilidoso',5],['下手','へた','na','ruim (em algo)',5],['綺麗','きれい','na','bonito, limpo',5],
+['親切','しんせつ','na','gentil, prestativo',4],['簡単','かんたん','na','simples',4],['大切','たいせつ','na','importante',4],['大丈夫','だいじょうぶ','na','tudo bem',5,['adv']],['暇','ひま','na','livre (tempo)',5],
+['賑やか','にぎやか','na','animado, movimentado',5],['丁寧','ていねい','na','cortês, caprichado',4],['大変','たいへん','na','puxado, difícil',5],['安全','あんぜん','na','seguro',4],['特別','とくべつ','na','especial',4],
+['必要','ひつよう','na','necessário',4],['素直','すなお','na','sincero, dócil',3]
+].map(([kanji,kana,t,pt,lv,no])=>{
+  const w={kanji,kana,t,pt,lv,no:no||[]};
+  const cut={g:1,i:1,s:2,k:2,ai:1,ii:0,na:0}[t];
+  w.p=t==='ii'?'よ':kana.slice(0,kana.length-cut);
+  w.kp=t==='ii'?'よ':kanji.slice(0,kanji.length-cut);
+  if(t==='g'){w.e=kana.slice(-1);w.iku=kana==='いく';}
+  return w;
+});
+const GROUP={g:'g',i:'i',s:'irr',k:'irr',ai:'ai',ii:'ai',na:'na'};
+
+/* ---------------------------- MOTOR ---------------------------- */
+const ROW={'う':'わいうえお','く':'かきくけこ','ぐ':'がぎぐげご','す':'さしすせそ','つ':'たちつてと','ぬ':'なにぬねの','ぶ':'ばびぶべぼ','む':'まみむめも','る':'らりるれろ'};
+const TE={'う':'って','つ':'って','る':'って','む':'んで','ぶ':'んで','ぬ':'んで','く':'いて','ぐ':'いで','す':'して'};
+const uniq=a=>[...new Set(a)];
+const ta=te=>te.slice(0,-1)+(te.endsWith('で')?'だ':'た');
+function vs(v){const p=v.p;
+  if(v.t==='g'){const r=ROW[v.e];return{dict:p+v.e,a:p+r[0],i:p+r[1],e:p+r[3],vol:p+r[4]+'う',te:v.iku?p+'って':p+TE[v.e],ba:p+r[3]+'ば',imp:[p+r[3]]};}
+  if(v.t==='i')return{dict:p+'る',a:p,i:p,e:p+'れ',vol:p+'よう',te:p+'て',ba:p+'れば',imp:[p+'ろ',p+'よ']};
+  if(v.t==='s')return{dict:p+'する',a:p+'し',i:p+'し',vol:p+'しよう',te:p+'して',ba:p+'すれば',imp:[p+'しろ',p+'せよ']};
+  return{dict:p+'くる',a:p+'こ',i:p+'き',vol:p+'こよう',te:p+'きて',ba:p+'くれば',imp:[p+'こい']};
+}
+function vBase(v,d){const s=vs(v);
+  if(d.pol)return[s.i+(d.past?(d.neg?'ませんでした':'ました'):(d.neg?'ません':'ます'))];
+  if(d.past)return[d.neg?s.a+'なかった':ta(s.te)];
+  return[d.neg?s.a+'ない':s.dict];
+}
+function derive(v,kind){const p=v.p,s=vs(v),g=v.t==='g',i=v.t==='i',su=v.t==='s';let L;
+  if(kind==='passive')L=g?[s.a+'れる']:i?[p+'られる']:su?[p+'される']:[p+'こられる'];
+  if(kind==='caus')L=g?[s.a+'せる']:i||su?[p+'させる']:[p+'こさせる'];
+  if(kind==='causpass')L=g?(v.e==='す'?[s.a+'せられる']:[s.a+'せられる',s.a+'される']):i||su?[p+'させられる']:[p+'こさせられる'];
+  if(kind==='pot')L=g?[s.e+'る']:i?[p+'られる',p+'れる']:su?[p+'できる']:[p+'こられる',p+'これる'];
+  return L.map(x=>({t:'i',p:x.slice(0,-1)}));
+}
+const dv=(w,k,d)=>uniq(derive(w,k).flatMap(x=>vBase(x,d)));
+function aI(p,d){
+  if(!d.pol){if(!d.past)return[d.neg?p+'くない':p+'い'];return[d.neg?p+'くなかった':p+'かった'];}
+  if(!d.past)return d.neg?[p+'くないです',p+'くありません']:[p+'いです'];
+  return d.neg?[p+'くなかったです',p+'くありませんでした']:[p+'かったです'];
+}
+function aNa(p,d){
+  if(!d.pol){if(!d.past)return d.neg?[p+'じゃない',p+'ではない']:[p+'だ',p];return d.neg?[p+'じゃなかった',p+'ではなかった']:[p+'だった'];}
+  if(!d.past)return d.neg?[p+'じゃありません',p+'ではありません',p+'じゃないです',p+'ではないです']:[p+'です'];
+  return d.neg?[p+'じゃありませんでした',p+'ではありませんでした',p+'じゃなかったです',p+'ではなかったです']:[p+'でした'];
+}
+const isNa=w=>w.t==='na';
+const FORMS={
+ base:{pos:'v',name:'Forma básica',jp:'辞書形・ます形',dims:['past','neg','pol'],f:(w,d)=>vBase(w,d)},
+ te:{pos:'v',name:'Forma て',jp:'〜て／〜ないで',dims:['neg'],f:(w,d)=>{const s=vs(w);return d.neg?[s.a+'ないで',s.a+'なくて']:[s.te]}},
+ tai:{pos:'v',name:'Desejo',jp:'〜たい',dims:['past','neg','pol'],f:(w,d)=>aI(vs(w).i+'た',d)},
+ vol:{pos:'v',name:'Volitivo',jp:'〜よう／〜ましょう',dims:['pol'],f:(w,d)=>{const s=vs(w);return[d.pol?s.i+'ましょう':s.vol]}},
+ tari:{pos:'v',name:'Forma たり',jp:'〜たり',dims:[],f:w=>[ta(vs(w).te)+'り']},
+ ba:{pos:'v',name:'Condicional ば',jp:'〜ば／〜なければ',dims:['neg'],f:(w,d)=>{const s=vs(w);return[d.neg?s.a+'なければ':s.ba]}},
+ tara:{pos:'v',name:'Condicional たら',jp:'〜たら',dims:['neg'],f:(w,d)=>{const s=vs(w);return[d.neg?s.a+'なかったら':ta(s.te)+'ら']}},
+ nagara:{pos:'v',name:'Simultâneo',jp:'〜ながら',dims:[],f:w=>[vs(w).i+'ながら']},
+ kudasai:{pos:'v',name:'Pedido',jp:'〜てください',dims:['neg'],f:(w,d)=>{const s=vs(w);return[d.neg?s.a+'ないでください':s.te+'ください']}},
+ imp:{pos:'v',name:'Imperativo',jp:'命令形／〜な',dims:['neg'],f:(w,d)=>{const s=vs(w);return d.neg?[s.dict+'な']:s.imp}},
+ passive:{pos:'v',name:'Passiva',jp:'受身形 〜られる',dims:['past','neg','pol'],f:(w,d)=>dv(w,'passive',d)},
+ caus:{pos:'v',name:'Causativa',jp:'使役形 〜させる',dims:['past','neg','pol'],f:(w,d)=>dv(w,'caus',d)},
+ causpass:{pos:'v',name:'Causativa-passiva',jp:'使役受身 〜させられる',dims:['past','neg','pol'],f:(w,d)=>dv(w,'causpass',d)},
+ pot:{pos:'v',name:'Potencial',jp:'可能形 〜られる／〜える',dims:['past','neg','pol'],f:(w,d)=>dv(w,'pot',d)},
+ abase:{pos:'a',name:'Forma básica',jp:'〜い／〜だ',dims:['past','neg','pol'],f:(w,d)=>isNa(w)?aNa(w.p,d):aI(w.p,d)},
+ adv:{pos:'a',name:'Advérbio',jp:'〜く／〜に',dims:[],f:w=>[isNa(w)?w.p+'に':w.p+'く']},
+ ate:{pos:'a',name:'Forma て',jp:'〜くて／〜で',dims:['neg'],f:(w,d)=>isNa(w)?(d.neg?[w.p+'じゃなくて',w.p+'ではなくて']:[w.p+'で']):[d.neg?w.p+'くなくて':w.p+'くて']},
+ naru:{pos:'a',name:'Tornar-se',jp:'〜くなる／〜になる',dims:['past','neg','pol'],f:(w,d)=>vBase({t:'g',e:'る',p:w.p+(isNa(w)?'にな':'くな')},d)},
+ atari:{pos:'a',name:'Forma たり',jp:'〜かったり／〜だったり',dims:[],f:w=>[isNa(w)?w.p+'だったり':w.p+'かったり']},
+ aba:{pos:'a',name:'Condicional',jp:'〜ければ／〜なら',dims:['neg'],f:(w,d)=>isNa(w)?(d.neg?[w.p+'じゃなければ',w.p+'でなければ',w.p+'ではなければ']:[w.p+'なら',w.p+'ならば',w.p+'であれば']):[d.neg?w.p+'くなければ':w.p+'ければ']},
+};
+const FORM_GROUPS=[['Verbos',['base','te','tai','vol','tari','ba','tara','nagara','kudasai','imp']],['Verbos — avançado',['passive','caus','causpass','pot']],['Adjetivos',['abase','adv','ate','naru','atari','aba']]];
+function kanjify(w,s){if(w.kanji===w.kana||w.t==='ii')return s;if(w.t==='k')return w.kp+'来'+s.slice(w.p.length+1);return w.kp+s.slice(w.p.length);}
+function answers(q){const w=WORDS[q.w];let L=uniq(FORMS[q.f].f(w,q.d));
+  if(w.t==='ii')L=uniq(L.flatMap(x=>x.startsWith('よい')?['いい'+x.slice(2),x]:[x]));
+  return{kana:L,kanji:uniq(L.map(x=>kanjify(w,x)))};}
+
+/* ---------------------------- ROMAJI → かな ---------------------------- */
+const RK={};
+(()=>{const base={a:'あ',i:'い',u:'う',e:'え',o:'お'};Object.assign(RK,base);
+ const rows={k:'かきくけこ',g:'がぎぐげご',s:'さしすせそ',z:'ざじずぜぞ',t:'たちつてと',d:'だぢづでど',n:'なにぬねの',h:'はひふへほ',b:'ばびぶべぼ',p:'ぱぴぷぺぽ',m:'まみむめも',r:'らりるれろ',l:'らりるれろ'};
+ for(const c in rows)'aiueo'.split('').forEach((v,j)=>RK[c+v]=rows[c][j]);
+ Object.assign(RK,{ya:'や',yu:'ゆ',yo:'よ',wa:'わ',wo:'を',we:'うぇ',wi:'うぃ',shi:'し',chi:'ち',tsu:'つ',fu:'ふ',ji:'じ',si:'し',ti:'ち',tu:'つ',hu:'ふ',zi:'じ',di:'ぢ',du:'づ',
+  fa:'ふぁ',fi:'ふぃ',fe:'ふぇ',fo:'ふぉ',va:'ゔぁ',vi:'ゔぃ',vu:'ゔ',ve:'ゔぇ',vo:'ゔぉ',xa:'ぁ',xi:'ぃ',xu:'ぅ',xe:'ぇ',xo:'ぉ',xya:'ゃ',xyu:'ゅ',xyo:'ょ',xtu:'っ',xtsu:'っ',ltu:'っ',ltsu:'っ',lya:'ゃ',lyu:'ゅ',lyo:'ょ',
+  ja:'じゃ',ju:'じゅ',jo:'じょ',je:'じぇ',sha:'しゃ',shu:'しゅ',sho:'しょ',she:'しぇ',cha:'ちゃ',chu:'ちゅ',cho:'ちょ',che:'ちぇ',tsa:'つぁ'});
+ const yr={ky:'き',gy:'ぎ',sy:'し',zy:'じ',jy:'じ',ty:'ち',cy:'ち',dy:'ぢ',ny:'に',hy:'ひ',by:'び',py:'ぴ',my:'み',ry:'り'};
+ for(const c in yr){RK[c+'a']=yr[c]+'ゃ';RK[c+'u']=yr[c]+'ゅ';RK[c+'o']=yr[c]+'ょ';}
+})();
+const RKP=new Set();Object.keys(RK).forEach(k=>{for(let i=1;i<k.length;i++)RKP.add(k.slice(0,i))});
+function toKana(src,final){const s=src.toLowerCase();let out='',i=0;
+  while(i<s.length){const c=s[i];
+    if(!/[a-z'\-]/.test(c)){out+=c;i++;continue}
+    if(c==='-'){out+='ー';i++;continue}
+    if(c==="'"){i++;continue}
+    const n1=s[i+1];
+    if(c==='n'){
+      if(n1==="'"){out+='ん';i+=2;continue}
+      if(n1==='n'){if(/[aiueoy]/.test(s[i+2]||'')){out+='ん';i++;}else{out+='ん';i+=2;}continue}
+      if(n1&&/[bcdfghjkmpqrstvwxz]/.test(n1)){out+='ん';i++;continue}
+      if(n1===undefined){out+=final?'ん':'n';i++;continue}
+    }
+    if(/[bcdfghjkmpqrstvwxyz]/.test(c)&&n1===c){out+='っ';i++;continue}
+    let hit=false;
+    for(let L=4;L>=1;L--){const sub=s.substr(i,L);if(sub.length===L&&RK[sub]){out+=RK[sub];i+=L;hit=true;break}}
+    if(hit)continue;
+    const rest=s.slice(i);
+    if(!final&&RKP.has(rest)){out+=rest;break}
+    out+=c;i++;
+  }
+  return out;}
+const kata2hira=s=>s.replace(/[ァ-ヶ]/g,c=>String.fromCharCode(c.charCodeAt(0)-0x60));
+const norm=s=>kata2hira(toKana(String(s||'').trim(),true)).replace(/[\s　。．.!！?？、,]/g,'');
+function check(q,txt){const a=answers(q),t=norm(txt);if(!t)return false;return a.kana.includes(t)||a.kanji.includes(t);}
+
+/* ---------------------------- PERGUNTAS ---------------------------- */
+const DEF={forms:['base','te','tai','vol','abase','ate','naru','adv'],types:['g','i','irr','ai','na'],levels:[5,4],rounds:15,secs:20,vary:{past:true,neg:true,pol:true},furi:'always',meaning:true,auto:false,srs:true,srsPct:50};
+const qkey=q=>[q.w,q.f,q.d.past?1:0,q.d.neg?1:0,q.d.pol?1:0].join('-');
+
+/* ---------------------------- CAPIVARA ---------------------------- */
+const MOOD=['morrendo','acabada','apanhando','de boa','feliz','radiante'];
+function capy(lv,size,anim){const dead=lv===0,ink='#2a1a10';
+  const body=dead?'#9c938b':'#a8744a',dark=dead?'#7b726b':'#85563a',sn=dead?'#8a817a':'#93603d';
+  const L=(d,w)=>`<path d="${d}" stroke="${ink}" stroke-width="${w||3}" fill="none" stroke-linecap="round"/>`;
+  const eye=[L('M85 38l8 8M93 38l-8 8'),`<circle cx="89" cy="43" r="7.5" fill="#5b3b6e" opacity=".85"/>${L('M84 44h10')}`,`<circle cx="89" cy="43" r="3" fill="${ink}"/>${L('M83 36l11 4',2.5)}`,
+    `<circle cx="89" cy="42" r="3.2" fill="${ink}"/><circle cx="90" cy="41" r="1" fill="#fff"/>`,L('M84 44q5-7 10 0'),L('M84 44q5-7 10 0')][lv];
+  const mouth=[`${L('M100 62h10',2.5)}<path d="M103 62q2.5 8 5 0" fill="#e57a8a"/>`,L('M100 65q5-6 10 0',2.5),L('M100 63h9',2.5),L('M101 61q4 2 8 0',2.5),L('M99 59q6 7 12 0',2.5),L('M99 58q6 9 12 0',2.5)][lv];
+  let fx='';
+  if(lv>=4)fx+=`<ellipse cx="81" cy="55" rx="6" ry="3.5" fill="#f2848a" opacity=".65"/>`;
+  if(lv===2)fx+=`<g transform="rotate(-25 76 32)"><rect x="68" y="28" width="18" height="7" rx="3" fill="#f1d3a7"/><path d="M74 28v7M80 28v7" stroke="#d6b07c"/></g><path d="M116 26q-4 7 0 9q4-2 0-9z" fill="#7cc4ff"/>`;
+  if(lv===1)fx+=`<rect x="64" y="27" width="47" height="9" rx="3" fill="#f4f0e8"/><path d="M70 27l5 9M78 27l5 9" stroke="#d9d2c4"/><g transform="rotate(20 40 52)"><rect x="30" y="48" width="20" height="8" rx="3" fill="#f1d3a7"/></g><path d="M116 22q-4 7 0 9q4-2 0-9zM8 48q-4 7 0 9q4-2 0-9z" fill="#7cc4ff"/>`;
+  const legs=[22,38,62,78].map(x=>`<rect x="${x}" y="70" width="11" height="18" rx="5" fill="${dark}"/>`).join('');
+  const g=`${legs}<ellipse cx="52" cy="60" rx="40" ry="25" fill="${body}"/><ellipse cx="46" cy="47" rx="26" ry="8" fill="#fff" opacity=".12"/>
+   <rect x="64" y="24" width="46" height="44" rx="18" fill="${body}"/><rect x="94" y="40" width="22" height="28" rx="10" fill="${sn}"/>
+   <ellipse cx="74" cy="25" rx="6.5" ry="5" fill="${dark}"/><ellipse cx="110" cy="46" rx="2.2" ry="1.6" fill="${ink}"/>${eye}${mouth}${fx}`;
+  const top=lv===5?`<circle cx="84" cy="15" r="9" fill="#f6c445"/><circle cx="81" cy="12" r="2.5" fill="#fff" opacity=".5"/><path d="M84 6q5-6 9-2q-5 3-9 2z" fill="#5fae4a"/><path d="M16 18l2 6 6 2-6 2-2 6-2-6-6-2 6-2zM110 6l1.5 4 4 1.5-4 1.5-1.5 4-1.5-4-4-1.5 4-1.5z" fill="#f6c445"/>`
+    :dead?`<ellipse cx="60" cy="10" rx="16" ry="4.5" fill="none" stroke="#f6c445" stroke-width="3"/>`:'';
+  return`<svg class="capy ${anim||''}" viewBox="0 0 120 100" width="${size}" height="${Math.round(size*100/120)}" role="img" aria-label="capivara ${MOOD[lv]}">
+   <ellipse cx="58" cy="92" rx="44" ry="5" fill="#000" opacity=".28"/>${dead?`<g transform="translate(0 106) scale(1 -1)">${g}</g>`:g}${top}</svg>`;}
+function eligible(cfg,fk){const F=FORMS[fk];return WORDS.map((w,i)=>i).filter(i=>{const w=WORDS[i];
+  const isV='gisk'.includes(w.t)&&w.t.length===1;
+  return (F.pos==='v'?isV:!isV)&&cfg.types.includes(GROUP[w.t])&&cfg.levels.includes(w.lv)&&!w.no.includes(fk);});}
+function poolOK(cfg){return cfg.forms.filter(f=>eligible(cfg,f).length);}
+function genQ(cfg,prev){const fs=poolOK(cfg);if(!fs.length)return null;
+  for(let tries=0;tries<20;tries++){const f=fs[Math.random()*fs.length|0];const el=eligible(cfg,f);const w=el[Math.random()*el.length|0];
+    if(prev&&prev.w===w&&tries<19)continue;
+    const d={past:false,neg:false,pol:false};FORMS[f].dims.forEach(k=>{if(cfg.vary[k])d[k]=Math.random()<.5});
+    return{w,f,d};}
+}
+
+/* ---------------------------- REDE ---------------------------- */
+function deepSet(o,path,val){const ks=path.split('/');for(let i=0;i<ks.length-1;i++){if(!o[ks[i]]||typeof o[ks[i]]!=='object')o[ks[i]]={};o=o[ks[i]];}
+  const k=ks[ks.length-1];if(val===null||val===undefined)delete o[k];else o[k]=JSON.parse(JSON.stringify(val));}
+function merge(a,b){if(!b||typeof b!=='object')return b===undefined?a:b;const o=Object.assign({},a);for(const k in b)o[k]=(a&&typeof a[k]==='object'&&typeof b[k]==='object')?merge(a[k],b[k]):b[k];return o;}
+class LocalNet{
+  async init(code){this.kind='local';this.store={};this.cbs=[];this.ch=new BroadcastChannel('conjuga-'+code);
+    this.ch.onmessage=e=>{const m=e.data;if(m.op==='set'){deepSet(this.store,m.path,m.val);this.emit()}
+      else if(m.op==='hello'){if(Object.keys(this.store).length)this.ch.postMessage({op:'full',store:this.store})}
+      else if(m.op==='full'){this.store=merge(m.store,this.store);this.emit()}};
+    this.ch.postMessage({op:'hello'});await new Promise(r=>setTimeout(r,250));}
+  on(cb){this.cbs.push(cb);cb(this.store)}
+  emit(){if(this.q)return;this.q=1;queueMicrotask(()=>{this.q=0;this.cbs.forEach(c=>c(this.store))})}
+  set(path,val){deepSet(this.store,path,val);this.ch.postMessage({op:'set',path,val:val===undefined?null:val});this.emit();return Promise.resolve()}
+  now(){return Date.now()}
+  online(){}
+}
+const loadScript=src=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.onload=ok;s.onerror=()=>no(new Error('Falha ao carregar '+src));document.head.appendChild(s)});
+class FireNet{
+  async init(code,cfg){this.kind='online';const v='10.12.2';
+    if(!window.firebase){await loadScript(`https://www.gstatic.com/firebasejs/${v}/firebase-app-compat.js`);await loadScript(`https://www.gstatic.com/firebasejs/${v}/firebase-database-compat.js`);}
+    const app=firebase.apps.length?firebase.app():firebase.initializeApp(cfg);
+    this.db=firebase.database(app);this.root=this.db.ref('games/'+code);this.off=0;
+    this.db.ref('.info/serverTimeOffset').on('value',s=>this.off=s.val()||0);
+    await this.root.child('state').once('value');}
+  on(cb){this.root.on('value',s=>cb(s.val()||{}),e=>toast('Sem permissão no Firebase: confira as regras do banco.'))}
+  set(path,val){return this.root.child(path).set(val===undefined?null:val)}
+  now(){return Date.now()+this.off}
+  online(path){const r=this.root.child(path);r.set(true);r.onDisconnect().set(false);this.db.ref('.info/connected').on('value',s=>{if(s.val()){r.set(true);r.onDisconnect().set(false)}})}
+}
+
+/* ---------------------------- ESTADO ---------------------------- */
+const ls={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+let pid;try{pid=sessionStorage.getItem('conjuga-pid');if(!pid){pid=Math.random().toString(36).slice(2,10);sessionStorage.setItem('conjuga-pid',pid)}}catch(e){pid=Math.random().toString(36).slice(2,10)}
+const S={role:null,code:'',net:null,data:{},cfg:Object.assign({},DEF,ls.get('conjuga-cfg',{})),name:ls.get('conjuga-name',''),hostPlays:false,mine:{},key:'',fbcfg:FIREBASE_CONFIG||ls.get('conjuga-fb',null),busy:false,revealing:0,prevLv:{},liveHTML:'',pad:ls.get('conjuga-pad',false)};
+S.cfg.vary=Object.assign({},DEF.vary,S.cfg.vary||{});if(S.cfg.srs===undefined)S.cfg.srs=true;if(!S.cfg.srsPct)S.cfg.srsPct=50;
+const $=s=>document.querySelector(s);
+const app=$('#app');
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toast(msg){const e=$('#err');if(e)e.textContent=msg;else console.warn(msg)}
+const b64e=o=>btoa(JSON.stringify(o)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const b64d=s=>JSON.parse(atob(s.replace(/-/g,'+').replace(/_/g,'/')));
+function parseCfg(txt){const m=String(txt).match(/\{[\s\S]*\}/);if(!m)throw new Error('Não achei o objeto { ... } da config.');
+  const s=m[0].replace(/\/\/.*$/gm,'').replace(/([{,]\s*)([A-Za-z_]\w*)\s*:/g,'$1"$2":').replace(/'/g,'"').replace(/,\s*}/g,'}');
+  const o=JSON.parse(s);if(!o.databaseURL)throw new Error('Falta o databaseURL (crie o Realtime Database primeiro).');
+  return{apiKey:o.apiKey,databaseURL:o.databaseURL,projectId:o.projectId,appId:o.appId};}
+function joinURL(){const base=location.href.split('#')[0];return base+'#'+S.code+(S.net.kind==='online'?'.'+b64e(S.fbcfg):'');}
+
+function players(){const P=S.data.players||{};return Object.keys(P).map(id=>({id,name:P[id].name||'?',on:P[id].on!==false,t:P[id].t||0})).sort((a,b)=>a.t-b.t);}
+function ranking(){const A=S.data.answers||{},st=S.data.state||{},R={};
+  players().forEach(p=>R[p.id]={id:p.id,name:p.name,score:0,ok:0,streak:0,best:0,hp:50,seen:false});
+  for(let r=1;r<=(st.round||0);r++){const ar=A['r'+r]||{};const closed=r<st.round||st.phase!=='question';
+    for(const id in R){const a=ar[id];const x=R[id];
+      if(a){x.seen=true;if(a.ok){x.score+=a.pts||0;x.ok++;x.streak++;x.best=Math.max(x.best,x.streak);x.hp=Math.min(100,x.hp+12)}else{x.streak=0;x.hp=Math.max(0,x.hp-15)}}
+      else if(closed){x.streak=0;if(x.seen)x.hp=Math.max(0,x.hp-10)}}}
+  Object.values(R).forEach(x=>x.lv=x.hp>=90?5:x.hp>=70?4:x.hp>=45?3:x.hp>=25?2:x.hp>0?1:0);
+  return Object.values(R).sort((a,b)=>b.score-a.score||b.ok-a.ok);}
+function capyAnim(id,lv){const p=S.prevLv[id];S.prevLv[id]=lv;return p===undefined||p===lv?'':lv>p?'up':'down';}
+
+/* ---------------------------- CONEXÃO ---------------------------- */
+async function connect(code,online){
+  const net=online?new FireNet():new LocalNet();
+  await net.init(code,S.fbcfg);
+  S.net=net;S.code=code;
+  net.on(d=>{S.data=d||{};render()});
+}
+async function hostCreate(mode){
+  if(S.busy)return;S.busy=true;
+  try{
+    const code=Array.from({length:4},()=>'ACDEFGHJKLMNPQRTUVWXYZ'[Math.random()*22|0]).join('');
+    await connect(code,mode==='online');
+    S.role='host';
+    await S.net.set('',null).catch(()=>{});
+    await S.net.set('state',{phase:'lobby',round:0,total:S.cfg.rounds,opts:{furi:S.cfg.furi,meaning:S.cfg.meaning}});
+    if(mode==='solo'){S.hostPlays=true;await joinAs(S.name||'Eu');}
+    location.hash='host-'+code;
+  }catch(e){toast(e.message||String(e))}
+  S.busy=false;render(true);
+}
+async function joinAs(name){S.name=name;ls.set('conjuga-name',name);
+  await S.net.set('players/'+pid,{name:name.slice(0,24),on:true,t:S.net.now()});S.net.online('players/'+pid+'/on');}
+async function playerJoin(code,name){
+  if(S.busy)return;S.busy=true;
+  try{code=code.toUpperCase().replace(/[^A-Z]/g,'');if(code.length!==4)throw new Error('O código tem 4 letras.');
+    if(!name.trim())throw new Error('Digite seu nome.');
+    await connect(code,!!S.fbcfg);
+    if(!S.data.state){throw new Error(S.fbcfg?'Sala não encontrada.':'Sala não encontrada. Sem a config do Firebase, só dá para entrar em salas abertas neste mesmo navegador — use o link/QR do professor.')}
+    S.role='player';await joinAs(name.trim());
+  }catch(e){toast(e.message||String(e))}
+  S.busy=false;render(true);
+}
+
+/* ---------------------------- ANFITRIÃO ---------------------------- */
+const st=()=>S.data.state||{};
+async function startGame(){
+  const c=S.cfg;if(!poolOK(c).length){toast('Nenhuma combinação possível: confira formas, tipos de palavra e níveis.');return}
+  ls.set('conjuga-cfg',c);
+  if(S.hostPlays&&!(S.data.players||{})[pid])await joinAs(S.name||'Professor');
+  await S.net.set('answers',null);
+  await S.net.set('state',{phase:'lobby',round:0,total:c.rounds,opts:{furi:c.furi,meaning:c.meaning}});
+  nextRound();
+}
+function nextRound(){const s=st(),c=S.cfg;const r=(s.round||0)+1;
+  const srs=(s.srs||[]).slice();let total=s.total||c.rounds,extra=s.extra||0,q=null;
+  if(r>total){if(c.srs&&srs.length&&extra<5){q=srs.shift().q;total++;extra++}else{S.net.set('state',Object.assign({},s,{phase:'end'}));return}}
+  else{const i=srs.findIndex(x=>x.due<=r);if(i>=0)q=srs.splice(i,1)[0].q}
+  if(!q)q=genQ(c,s.q);const now=S.net.now();
+  S.net.set('state',{phase:'question',round:r,total,extra,q,srs,hard:s.hard||[],start:now,deadline:now+c.secs*1000,opts:{furi:c.furi,meaning:c.meaning}});}
+function reveal(){const s=st();if(s.phase!=='question')return;
+  const ar=(S.data.answers||{})['r'+s.round]||{};const part=players().filter(p=>p.on||ar[p.id]);
+  const wrong=part.filter(p=>!(ar[p.id]&&ar[p.id].ok)).length;const pct=part.length?Math.round(100*wrong/part.length):0;
+  const srs=(s.srs||[]).slice(),hard=(s.hard||[]).slice();
+  if(S.cfg.srs&&part.length&&pct>=S.cfg.srsPct){const rv=s.q.rv||0;
+    if(rv<2)srs.push({q:Object.assign({},s.q,{rv:rv+1,pct}),due:s.round+2+rv*2});
+    const k=qkey(s.q),h=hard.find(x=>qkey(x.q)===k);if(h)h.pct=Math.max(h.pct,pct);else hard.push({q:{w:s.q.w,f:s.q.f,d:s.q.d},pct});}
+  S.net.set('state',Object.assign({},s,{phase:'reveal',revealedAt:S.net.now(),pct,srs,hard}));}
+setInterval(()=>{
+  if(S.role!=='host'||!S.net)return;const s=st(),now=S.net.now();
+  if(s.phase==='question'){const ar=(S.data.answers||{})['r'+s.round]||{};const on=players().filter(p=>p.on);
+    if((now>=s.deadline||(on.length&&on.every(p=>ar[p.id])))&&S.revealing!==s.round){S.revealing=s.round;reveal();}}
+  if(s.phase==='reveal'&&S.cfg.auto&&now-(s.revealedAt||now)>6000&&S.advanced!==s.round){S.advanced=s.round;nextRound();}
+},200);
+
+/* ---------------------------- JOGADOR ---------------------------- */
+function submit(){const s=st();if(s.phase!=='question')return;const r=s.round;if(S.mine[r])return;
+  const inp=$('#ans');if(!inp)return;const txt=toKana(inp.value,true).trim();if(!txt)return;
+  const now=S.net.now();const ok=check(s.q,txt);
+  const pts=ok?100+Math.round(50*Math.max(0,s.deadline-now)/Math.max(1,s.deadline-s.start)):0;
+  S.mine[r]={a:txt,ok,pts};
+  S.net.set('answers/r'+r+'/'+pid,{a:txt.slice(0,40),ok,pts,t:now});
+  render(true);
+}
+
+/* ---------------------------- TELAS ---------------------------- */
+function ruby(w){if(w.kanji===w.kana)return esc(w.kana);let i=0;while(i<w.kanji.length&&i<w.kana.length&&w.kanji[w.kanji.length-1-i]===w.kana[w.kana.length-1-i])i++;
+  return`<ruby>${esc(w.kanji.slice(0,w.kanji.length-i))}<rt>${esc(w.kana.slice(0,w.kana.length-i))}</rt></ruby>${esc(w.kanji.slice(w.kanji.length-i))}`;}
+const TLABEL={g:'verbo う',i:'verbo る',s:'irregular',k:'irregular',ai:'adjetivo い',ii:'adjetivo い (irregular)',na:'adjetivo な'};
+function card(q,showFuri,showMean,tilt){const w=WORDS[q.w];
+  return`<div class="fuda ${tilt?'tilt':''}"><div class="w">${showFuri?ruby(w):esc(w.kanji)}</div>${showMean?`<div class="m">${esc(w.pt)}</div>`:''}<div class="k">${TLABEL[w.t]}</div></div>`;}
+function formBlock(q){const F=FORMS[q.f];const ch={past:['Presente','Passado'],neg:['Afirmativo','Negativo'],pol:['Informal','Formal']};
+  return`<div class="form"><div class="fn">${F.name}</div><div class="fj">${F.jp}</div><div class="chips">${F.dims.map(k=>`<span class="chip ${k} ${q.d[k]?'on':''}">${ch[k][q.d[k]?1:0]}</span>`).join('')||'<span class="chip">só afirmativo</span>'}</div></div>`;}
+function rightAns(q){const a=answers(q);const main=a.kanji[0]!==a.kana[0]?`${esc(a.kanji[0])}<div class="small mute">${esc(a.kana[0])}</div>`:esc(a.kana[0]);
+  const alts=a.kana.slice(1);return`<div class="right">${main}</div>${alts.length?`<div class="alt">também vale: ${alts.map(esc).join('、')}</div>`:''}`;}
+
+function viewHome(){const h=location.hash.slice(1);let code='';if(h&&!h.startsWith('host')){const [c,cfg]=h.split('.');code=c||'';if(cfg){try{S.fbcfg=b64d(cfg);ls.set('conjuga-fb',S.fbcfg)}catch(e){}}}
+  const joining=!!code;
+  return`<div class="home">
+  <div class="top"><div class="brand"><span class="logo">活</span>Conjuga!</div><span class="pill">${S.fbcfg?'<b>Online</b> · Firebase conectado':'Modo local (sem Firebase)'}</span></div>
+  <div class="hero"><div><h1>Batalha de conjugação</h1><p class="mute">Todo mundo recebe a mesma palavra ao mesmo tempo. Digite a forma pedida — em romaji ou com teclado japonês. Quem acerta pontua (mais rápido, mais pontos); quem erra vê a resposta certa.</p></div>
+   ${card({w:2,f:'base',d:{}},true,true,true)}</div>
+  <div class="grid2">
+   <section class="panel stackc"><h2>Entrar na sala</h2>
+    <input id="jcode" type="text" placeholder="Código (4 letras)" maxlength="4" value="${esc(code)}" autocomplete="off" style="text-transform:uppercase;font-size:22px;letter-spacing:.15em">
+    <input id="jname" type="text" placeholder="Seu nome" maxlength="24" value="${esc(S.name)}">
+    <button class="main" id="bjoin">Entrar</button><div class="err" id="err"></div></section>
+   ${joining?'':`<section class="panel stackc"><h2>Sou o professor</h2>
+    <button class="main" id="bonline" ${S.fbcfg?'':'disabled'}>Criar sala online</button>
+    <button id="blocal">Criar sala local (teste em abas)</button>
+    <button id="bsolo">Praticar sozinho</button>
+    <details ${S.fbcfg?'':'open'}><summary>${S.fbcfg?'Trocar config do Firebase':'Configurar Firebase (necessário para jogar em vários celulares)'}</summary>
+     <p class="small mute">1. Em console.firebase.google.com crie um projeto → <b>Realtime Database</b> → Criar banco.<br>2. Em Regras, cole:</p>
+     <pre>{"rules":{"games":{"$code":{".read":true,".write":true}}}}</pre>
+     <p class="small mute">3. Configurações do projeto → Seus apps → Web (&lt;/&gt;) → copie o objeto <code>firebaseConfig</code> e cole abaixo.</p>
+     <textarea id="fbtxt" rows="5" placeholder="const firebaseConfig = { apiKey: ..., databaseURL: ... }"></textarea>
+     <div class="row" style="margin-top:8px"><button id="bfb">Salvar config</button>${S.fbcfg?'<button id="bfbx">Remover</button>':''}</div></details></section>`}
+  </div></div>`;}
+
+function settingsHTML(){const c=S.cfg;const cb=(id,on,lab)=>`<label><input type="checkbox" data-k="${id}" ${on?'checked':''}>${lab}</label>`;
+  return`<h3>Formas</h3>${FORM_GROUPS.map(([g,fs])=>`<div class="small mute" style="margin-top:6px">${g}</div><div class="opts">${fs.map(f=>cb('f:'+f,c.forms.includes(f),`${FORMS[f].name} <span class="mute small">${FORMS[f].jp}</span>`)).join('')}</div>`).join('')}
+  <h3>Palavras</h3><div class="opts">${[['g','Verbos う'],['i','Verbos る'],['irr','Irregulares (する/来る)'],['ai','Adjetivos い (+いい)'],['na','Adjetivos な']].map(([k,l])=>cb('t:'+k,c.types.includes(k),l)).join('')}
+   ${[5,4,3].map(l=>cb('l:'+l,c.levels.includes(l),'Nível N'+l)).join('')}</div>
+  <h3>Pedir variações</h3><div class="opts">${cb('v:past',c.vary.past,'Passado')}${cb('v:neg',c.vary.neg,'Negativo')}${cb('v:pol',c.vary.pol,'Formal / informal')}</div>
+  <h3>Partida</h3><div class="opts">
+   <label>Rodadas <input type="number" id="srounds" min="1" max="99" value="${c.rounds}" style="width:90px"></label>
+   <label>Segundos <select id="ssecs" style="width:100px">${[10,15,20,30,45,60,90].map(s=>`<option ${s==c.secs?'selected':''}>${s}</option>`).join('')}</select></label>
+   <label>Furigana <select id="sfuri" style="width:170px"><option value="always" ${c.furi==='always'?'selected':''}>sempre</option><option value="after" ${c.furi==='after'?'selected':''}>só depois de responder</option><option value="never" ${c.furi==='never'?'selected':''}>nunca</option></select></label>
+   ${cb('o:meaning',c.meaning,'Mostrar significado')}${cb('o:auto',c.auto,'Avançar sozinho após revelar')}</div>
+  <h3>Revisão (SRS)</h3><div class="opts">${cb('o:srs',c.srs,'Repetir o que muita gente errou')}
+   <label>Quando erram <select id="ssrs" style="width:110px">${[30,50,70].map(p=>`<option value="${p}" ${p==c.srsPct?'selected':''}>${p}%+</option>`).join('')}</select></label></div>
+  <p class="small mute">A conjugação volta 2 rodadas depois (até 2 vezes). Se sobrar revisão no fim, entram até 5 rodadas extras.</p>
+  <p class="small mute" id="poolinfo"></p>`;}
+function bindSettings(){app.querySelectorAll('[data-k]').forEach(el=>el.onchange=()=>{const [t,v]=el.dataset.k.split(':');const c=S.cfg;
+    const tog=(arr,x)=>el.checked?(arr.includes(x)?arr:arr.concat(x)):arr.filter(y=>y!==x);
+    if(t==='f')c.forms=tog(c.forms,v);if(t==='t')c.types=tog(c.types,v);if(t==='l')c.levels=tog(c.levels,+v);if(t==='v')c.vary[v]=el.checked;if(t==='o')c[v]=el.checked;saveCfg();});
+  const r=$('#srounds');if(r)r.onchange=()=>{S.cfg.rounds=Math.max(1,Math.min(99,+r.value||10));saveCfg()};
+  const s=$('#ssecs');if(s)s.onchange=()=>{S.cfg.secs=+s.value;saveCfg()};
+  const f=$('#sfuri');if(f)f.onchange=()=>{S.cfg.furi=f.value;saveCfg()};const sp=$('#ssrs');if(sp)sp.onchange=()=>{S.cfg.srsPct=+sp.value;saveCfg()};poolInfo();}
+function saveCfg(){ls.set('conjuga-cfg',S.cfg);poolInfo();}
+function poolInfo(){const e=$('#poolinfo');if(!e)return;const fs=poolOK(S.cfg);const n=fs.reduce((t,f)=>t+eligible(S.cfg,f).length,0);
+  e.textContent=fs.length?`${fs.length} forma(s) ativa(s) · ${n} combinações palavra+forma possíveis.`:'Nenhuma combinação possível com essa seleção.';}
+
+function viewLobby(){const P=players();
+  return`<div class="top"><div class="brand"><span class="logo">活</span>Conjuga!</div><span class="pill">${S.net.kind==='online'?'<b>Online</b>':'<b>Local</b> · só abas deste navegador'}</span></div>
+  <div class="grid2"><section class="panel stackc"><div class="mute">Código da sala</div><div class="code">${S.code}</div>
+   <div class="row" style="align-items:flex-start"><div id="qr"></div><div class="stackc" style="flex:1;min-width:200px"><div class="link" id="jlink">${esc(joinURL())}</div><button id="bcopy">Copiar link</button></div></div>
+   <h2 style="margin-top:8px">Jogadores <span class="mute">(${P.length})</span></h2>
+   <ul class="plist">${P.map(p=>`<li>${capy(3,46)}<span class="n ${p.id===pid?'me':''}">${esc(p.name)}${p.id===pid?' (você)':''}</span>${p.on?'':'<span class="small mute">saiu</span>'}</li>`).join('')||'<li class="mute">Esperando alunos entrarem…</li>'}</ul>
+   <label class="row"><input type="checkbox" id="hplay" ${S.hostPlays?'checked':''} style="width:18px;height:18px;accent-color:var(--shu)"> Eu também jogo</label>
+   <input type="text" id="hname" placeholder="Seu nome no placar" value="${esc(S.name)}" maxlength="24" ${S.hostPlays?'':'hidden'}>
+   <button class="main" id="bstart">Começar partida</button><div class="err" id="err"></div></section>
+  <section class="panel">${settingsHTML()}</section></div>`;}
+
+const zooMode=()=>S.role==='host'&&!S.hostPlays;
+function liveList(s){const ar=(S.data.answers||{})['r'+s.round]||{};const rk=ranking();const zoo=zooMode();
+  const rows=rk.map(p=>{const a=ar[p.id];return{p,a,cls:a?(a.ok?'ok':'ng'):''}});
+  const sig=JSON.stringify(rows.map(r=>[r.p.id,r.p.name,r.p.score,r.p.lv,r.cls,r.a&&r.a.pts]))+zoo;
+  if(sig===S.liveSig)return null;S.liveSig=sig;
+  if(!rows.length)return'<li class="mute">Ninguém na sala</li>';
+  return rows.map(({p,a,cls})=>{const an=capyAnim(p.id,p.lv);
+    if(zoo)return`<li class="${cls}">${capy(p.lv,96,an)}<div class="n">${esc(p.name)}</div><div class="s">${a&&a.ok?'+'+a.pts+' · ':''}${p.score} pts · ${MOOD[p.lv]}</div></li>`;
+    return`<li class="${cls}">${capy(p.lv,46,an)}<span class="n ${p.id===pid?'me':''}">${esc(p.name)}<span class="mood"> · ${MOOD[p.lv]}</span></span><span class="mark">${a?(a.ok?'○':'×'):'…'}</span><span class="s">${a&&a.ok?'+'+a.pts+' · ':''}${p.score}</span></li>`}).join('');}
+function myCapy(){const me=ranking().find(p=>p.id===pid);if(!me)return'';const an=capyAnim('me',me.lv);
+  return`${capy(me.lv,96,an)}<div><span class="small mute">Sua capivara</span><b>${MOOD[me.lv]}</b><span class="small mute">${me.score} pts · ${me.ok} acertos</span></div>`;}
+function timerTxt(s){const left=Math.max(0,(s.deadline||0)-S.net.now());return{left,pct:100*left/Math.max(1,(s.deadline-s.start))};}
+const PAD=['あいうえお','かきくけこ','さしすせそ','たちつてと','なにぬねの','はひふへほ','まみむめも','や ゆ よ','らりるれろ','わ を ん'];
+function padHTML(){return`<div class="pad" id="pad">${PAD.join('').split('').map(c=>c===' '?'<span></span>':`<button type="button" data-c="${c}">${c}</button>`).join('')}
+  <button type="button" class="fx" data-x="dk">゛</button><button type="button" class="fx" data-x="hd">゜</button><button type="button" class="fx" data-x="sm">小</button><button type="button" class="fx" data-c="ー">ー</button><button type="button" class="fx" data-x="bs">⌫</button>
+  <button type="button" class="go" data-x="go">Enviar</button></div>`;}
+const DK1='かきくけこさしすせそたちつてとはひふへほう',DK2='がぎぐげござじずぜぞだぢづでどばびぶべぼゔ',HD1='はひふへほ',HD2='ぱぴぷぺぽ',SM1='あいうえおつやゆよわ',SM2='ぁぃぅぇぉっゃゅょゎ';
+function padKey(x){const a=$('#ans');if(!a)return;let v=toKana(a.value,true);const last=v.slice(-1),body=v.slice(0,-1);
+  const swap=(A,B)=>{let i=A.indexOf(last);if(i>=0)return body+B[i];i=B.indexOf(last);if(i>=0)return body+A[i];return v};
+  if(x==='dk'){const i=HD2.indexOf(last);v=i>=0?body+DK2[DK1.indexOf(HD1[i])]:swap(DK1,DK2)}
+  else if(x==='hd'){const i=DK2.indexOf(last);const base=i>=0?DK1[i]:last;const j=HD1.indexOf(base);v=j>=0?body+HD2[j]:(HD2.includes(last)?body+HD1[HD2.indexOf(last)]:v)}
+  else if(x==='sm')v=swap(SM1,SM2);else if(x==='bs')v=v.slice(0,-1);else if(x==='go'){submit();return}
+  a.value=v;showPrev();}
+function showPrev(){const a=$('#ans'),p=$('#prev');if(!a||!p)return;p.textContent=/[a-z]/i.test(a.value)?'→ '+toKana(a.value,true):'';}
+
+function viewGame(){const s=st(),q=s.q,host=S.role==='host',plays=!host||S.hostPlays;const mine=S.mine[s.round];
+  const ar=(S.data.answers||{})['r'+s.round]||{};const srv=ar[pid];
+  if(!mine&&srv)S.mine[s.round]={a:srv.a,ok:srv.ok,pts:srv.pts};
+  const m=S.mine[s.round];const revealed=s.phase==='reveal';
+  const furi=s.opts.furi==='always'||(s.opts.furi==='after'&&(m||revealed));
+  let mid='';
+  if(plays&&s.phase==='question'&&!m)mid=`<div class="ansbox"><input id="ans" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="ex.: tabemasu" lang="ja" ${S.pad?'inputmode="none"':''}>
+   <div class="prev" id="prev"></div><div class="hint">Digite em romaji: vira ひらがな sozinho · Enter para enviar</div>
+   <div class="padtog"><button type="button" id="bpad">${S.pad?'Fechar teclado かな':'Teclado かな na tela'}</button></div>${S.pad?padHTML():''}</div>`;
+  else if(m)mid=`<div class="fb ${m.ok?'ok':'ng'} pop">${m.ok?`<div class="big-ans">${esc(m.a)}</div><div>Certo! +${m.pts}</div>`:`<div class="yours">${esc(m.a)}</div>${rightAns(q)}`}</div>`;
+  else if(revealed)mid=`<div class="fb ${plays?'ng':'ok'} pop">${plays?'<div>Tempo esgotado</div>':''}${rightAns(q)}</div>`;
+  else mid=`<p class="hint" style="font-size:15px">Esperando respostas…</p>`;
+  if(revealed&&s.pct!=null)mid+=`<p class="hint" style="font-size:15px">${s.pct}% erraram${S.cfg.srs&&s.pct>=S.cfg.srsPct&&(q.rv||0)<2&&host?' — volta daqui a pouco para revisão':''}</p>`;
+  const zoo=zooMode();
+  return`<div class="top"><div class="brand"><span class="logo">活</span>Rodada ${s.round}/${s.total}${s.round>s.total-(s.extra||0)?' · revisão':''}</div><span class="pill">Sala <b>${S.code}</b></span></div>
+  <div class="timer"><i id="tbar"></i></div><div class="small mute" style="text-align:right;margin-top:4px" id="tnum"></div>
+  <div class="game ${zoo?'proj':''}"><section>${q.rv?`<span class="rev">Revisão · ${q.pct}% erraram antes</span>`:''}${card(q,furi,s.opts.meaning)}${formBlock(q)}<div id="mid">${mid}</div></section>
+   <aside class="panel live">${plays?'<div class="mycapy" id="mycapy"></div>':''}<h2>${zoo?'Capivaras':'Placar'} <span class="small mute" id="pcount"></span></h2><ul class="${zoo?'zoo':'plist'}" id="live"></ul></aside></div>
+  ${host?`<div class="hostbar">${s.phase==='question'?'<button id="brev">Revelar agora</button>':'<button class="main" id="bnext">'+(s.round>=s.total?((s.srs||[]).length&&S.cfg.srs&&(s.extra||0)<5?'Rodada de revisão ⏎':'Ver resultado final'):'Próxima ⏎')+'</button>'}<button id="bend">Encerrar</button></div>`:''}`;}
+
+function viewEnd(){const rk=ranking(),s=st(),host=S.role==='host';const top=[rk[0],rk[1],rk[2]];const H=(s.hard||[]).slice().sort((a,b)=>b.pct-a.pct);
+  const ch={past:['','Passado'],neg:['','Negativo'],pol:['Informal','Formal']};
+  return`<div class="top"><div class="brand"><span class="logo">活</span>Resultado final</div><span class="pill">${s.total} rodadas · sala <b>${S.code}</b></span></div>
+  <h1 style="text-align:center">${rk[0]?esc(rk[0].name)+' venceu!':'Fim de jogo'}</h1>
+  <div class="podium">${top.map((p,i)=>p?`<div class="p${i+1} pop">${capy(p.lv,80).replace('class="capy','style="margin:0 auto" class="capy')}<div class="pos">${i+1}º</div><div class="nm">${esc(p.name)}</div><div class="sc">${p.score}</div><div class="small mute">${p.ok}/${s.total} acertos</div></div>`:`<div class="p${i+1}" style="opacity:.3"></div>`).join('')}</div>
+  <section class="panel"><table><thead><tr><th>#</th><th>Nome</th><th>Capivara</th><th class="r">Pontos</th><th class="r">Acertos</th><th class="r">Melhor sequência</th></tr></thead>
+  <tbody>${rk.map((p,i)=>`<tr><td>${i+1}</td><td class="${p.id===pid?'me':''}">${esc(p.name)}</td><td><div class="row" style="gap:6px;flex-wrap:nowrap">${capy(p.lv,40)}<span class="small">${MOOD[p.lv]}</span></div></td><td class="r">${p.score}</td><td class="r">${p.ok}/${s.total}</td><td class="r">${p.best}</td></tr>`).join('')}</tbody></table></section>
+  ${H.length?`<section class="panel" style="margin-top:20px"><h2>Para revisar: o que mais gente errou</h2><ul class="hard">${H.map(h=>{const w=WORDS[h.q.w],F=FORMS[h.q.f],a=answers(h.q);
+    const tags=F.dims.map(k=>ch[k][h.q.d[k]?1:0]).filter(Boolean).join(' · ');
+    return`<li><div class="hw">${esc(w.kanji)} <span class="small mute">${esc(w.pt)}</span></div><div class="small mute">${F.name}${tags?' · '+tags:''}</div><div class="ha">${esc(a.kanji[0])}${a.kanji[0]!==a.kana[0]?` <span class="small mute">${esc(a.kana[0])}</span>`:''}</div><div class="small" style="color:var(--ng)">${h.pct}% erraram</div></li>`}).join('')}</ul></section>`:''}
+  ${host?'<div class="hostbar"><button class="main" id="bagain">Jogar de novo (mesma sala)</button><button id="blobby">Mudar configurações</button></div>':'<p class="hint">Espere o professor começar outra partida.</p>'}`;}
+
+function screenKey(){if(!S.role)return'home';const s=st();if(S.role==='player'&&!(S.data.players||{})[pid])return'kicked';
+  if(!s.phase||s.phase==='lobby')return S.role+'-lobby';if(s.phase==='end')return'end';return['game',s.phase,s.round,!!S.mine[s.round]||!!(((S.data.answers||{})['r'+s.round]||{})[pid])].join('|');}
+
+function render(force){const k=screenKey();
+  if(k!==S.key||force){S.key=k;
+    if(k==='home')app.innerHTML=viewHome();
+    else if(k==='host-lobby')app.innerHTML=viewLobby();
+    else if(k==='player-lobby')app.innerHTML=`<div class="top"><div class="brand"><span class="logo">活</span>Conjuga!</div><span class="pill">Sala <b>${S.code}</b></span></div><div style="text-align:center;margin-top:6vh"><h1>Você está dentro, ${esc(S.name)}!</h1><p class="mute">Esperando o professor começar…</p><div style="display:grid;place-items:center">${capy(3,170)}<div class="mute small">Sua capivara. Acerte para ela ficar feliz; erre e ela apanha.</div></div><h2 style="margin-top:30px">Na sala</h2><ul class="plist" id="lob" style="max-width:420px;margin:0 auto"></ul></div>`;
+    else if(k==='kicked'){app.innerHTML=`<div class="panel" style="max-width:480px;margin:10vh auto;text-align:center"><h2>Conexão perdida</h2><button class="main" id="brejoin">Entrar de novo</button></div>`;}
+    else if(k==='end')app.innerHTML=viewEnd();
+    else app.innerHTML=viewGame();
+    bind(k);}
+  dyn();}
+function dyn(){const s=st();
+  const lob=$('#lob');if(lob){const h=players().map(p=>`<li>${capy(3,46)}<span class="n ${p.id===pid?'me':''}">${esc(p.name)}</span></li>`).join('');if(lob.dataset.h!==h){lob.innerHTML=h;lob.dataset.h=h}}
+  if(S.key==='host-lobby'){const P=players();const ul=app.querySelector('.plist');const h=app.querySelector('h2 .mute');if(ul&&h&&h.textContent!==`(${P.length})`){S.key='';render();return}}
+  const live=$('#live');if(live){if(!live.childElementCount)S.liveSig='';const h=liveList(s);if(h!==null)live.innerHTML=h;const ar=(S.data.answers||{})['r'+s.round]||{};const pc=$('#pcount');if(pc)pc.textContent=`${Object.keys(ar).length}/${players().length} responderam`;}
+  const mc=$('#mycapy');if(mc){const me=ranking().find(p=>p.id===pid);const sig=me?me.lv+'|'+me.score:'';if(mc.dataset.sig!==sig){mc.dataset.sig=sig;mc.innerHTML=myCapy()}}
+  tick();}
+function tick(){const s=st();const b=$('#tbar'),n=$('#tnum');if(!b||!S.net)return;
+  if(s.phase==='question'){const t=timerTxt(s);b.style.width=t.pct+'%';n.textContent=Math.ceil(t.left/1000)+' s';}else{b.style.width='0%';n.textContent='tempo encerrado';}}
+setInterval(tick,200);
+
+function bind(k){const on=(id,fn)=>{const e=$(id);if(e)e.onclick=fn};
+  if(k==='home'){on('#bjoin',()=>playerJoin($('#jcode').value,$('#jname').value));
+    ['#jcode','#jname'].forEach(id=>{const e=$(id);if(e)e.onkeydown=ev=>{if(ev.key==='Enter')playerJoin($('#jcode').value,$('#jname').value)}});
+    on('#bonline',()=>hostCreate('online'));on('#blocal',()=>hostCreate('local'));on('#bsolo',()=>hostCreate('solo'));
+    on('#bfb',()=>{try{S.fbcfg=parseCfg($('#fbtxt').value);ls.set('conjuga-fb',S.fbcfg);render(true)}catch(e){toast(e.message)}});
+    on('#bfbx',()=>{S.fbcfg=null;ls.set('conjuga-fb',null);render(true)});
+    const jc=$('#jcode');if(jc&&jc.value)$('#jname').focus();}
+  if(k==='host-lobby'){bindSettings();on('#bstart',()=>{if(S.hostPlays){const n=($('#hname').value||'').trim();if(!n){toast('Digite seu nome para jogar.');return}S.name=n}startGame()});
+    on('#bcopy',()=>{const t=joinURL();navigator.clipboard.writeText(t).then(()=>{$('#bcopy').textContent='Copiado!'},()=>{const r=document.createRange();r.selectNodeContents($('#jlink'));getSelection().removeAllRanges();getSelection().addRange(r)})});
+    const hp=$('#hplay');if(hp)hp.onchange=()=>{S.hostPlays=hp.checked;$('#hname').hidden=!hp.checked;if(!hp.checked&&(S.data.players||{})[pid])S.net.set('players/'+pid,null)};
+    drawQR();}
+  if(k.startsWith('game')){const a=$('#ans');if(a){if(!S.pad||!matchMedia('(pointer:coarse)').matches)a.focus();
+      a.addEventListener('input',e=>{if(!e.isComposing){const v=toKana(a.value,false);if(v!==a.value)a.value=v}showPrev()});
+      a.addEventListener('compositionend',()=>setTimeout(()=>{a.value=toKana(a.value,false);showPrev()},0));
+      on('#bpad',()=>{S.pad=!S.pad;ls.set('conjuga-pad',S.pad);const v=a.value;render(true);const b=$('#ans');if(b){b.value=v;showPrev()}});
+      const pad=$('#pad');if(pad)pad.onclick=e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.c){const i=$('#ans');i.value=toKana(i.value,true)+b.dataset.c;showPrev()}else padKey(b.dataset.x)};
+      a.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.isComposing){e.preventDefault();submit()}});}
+    on('#brev',()=>{S.revealing=st().round;reveal()});on('#bnext',()=>nextRound());on('#bend',()=>S.net.set('state',Object.assign({},st(),{phase:'end'})));}
+  if(k==='end'){on('#bagain',()=>{S.mine={};startGame()});on('#blobby',()=>{S.mine={};S.net.set('answers',null);S.net.set('state',{phase:'lobby',round:0,total:S.cfg.rounds,opts:{}})});}
+  if(k==='kicked')on('#brejoin',()=>joinAs(S.name));}
+document.addEventListener('keydown',e=>{if(S.role==='host'&&e.key==='Enter'&&st().phase==='reveal'&&!$('#ans')){e.preventDefault();nextRound()}});
+function drawQR(){const el=$('#qr');if(!el)return;const go=()=>{try{el.innerHTML='';new QRCode(el,{text:joinURL(),width:150,height:150,correctLevel:QRCode.CorrectLevel.L})}catch(e){el.remove()}};
+  if(window.QRCode)go();else loadScript('https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js').then(go,()=>el.remove());}
+
+window.__conjuga={WORDS,FORMS,answers,check,toKana,norm,genQ,DEF};
+render(true);
+}
+</script>
+</body>
+</html>
